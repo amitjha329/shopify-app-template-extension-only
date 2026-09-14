@@ -62,8 +62,11 @@ class ProductVideoCarousel {
     this.bindEvents();
     this.setupObservers();
     
-    // Set initial position
-    this.goToSlide(this.options.initialIndex, false);
+    // Set initial position on original slide (avoid starting in clone territory)
+    const initialIdx = (typeof this.options.initialIndex === 'number' && !isNaN(this.options.initialIndex))
+      ? this.options.initialIndex
+      : 0;
+    this.goToSlide(this.cloneOffset + initialIdx, false);
 
     if (this.options.autoplay) {
       this.startAutoplay();
@@ -171,9 +174,12 @@ class ProductVideoCarousel {
 
     if (animate) {
       this.isAnimating = true;
+      this.track.classList.remove('pvc-no-transition');
       this.track.classList.add('is-animating');
     } else {
+      this.isAnimating = false;
       this.track.classList.remove('is-animating');
+      this.track.classList.add('pvc-no-transition');
     }
 
     this.setTrackPosition(targetOffset);
@@ -181,6 +187,11 @@ class ProductVideoCarousel {
     this.updateDots();
 
     if (!animate) {
+      // Force DOM reflow to commit classes with transition: none synchronously
+      void this.track.offsetHeight;
+      requestAnimationFrame(() => {
+        this.track.classList.remove('pvc-no-transition');
+      });
       this.handleSlideActivated();
     }
   }
@@ -294,8 +305,25 @@ class ProductVideoCarousel {
       // Wrap virtual index to matching original slide without animation
       const normalizedOriginal = ((this.virtualIndex - this.cloneOffset) % totalOriginals + totalOriginals) % totalOriginals;
       const newVirtualIndex = this.cloneOffset + normalizedOriginal;
+
+      // Transfer video state seamlessly so video doesn't reload or stutter
+      const currentSlide = this.allSlides[this.virtualIndex];
+      const currentVideo = currentSlide ? currentSlide.querySelector('video.pvc-video') : null;
+      const currentTime = currentVideo ? currentVideo.currentTime : 0;
+      const wasPlaying = currentVideo ? (!currentVideo.paused && !currentVideo.ended) : false;
       
       this.goToSlide(newVirtualIndex, false);
+
+      const targetSlide = this.allSlides[newVirtualIndex];
+      const targetVideo = targetSlide ? targetSlide.querySelector('video.pvc-video') : null;
+      if (targetVideo && currentTime > 0) {
+        try {
+          targetVideo.currentTime = currentTime;
+          if (wasPlaying && this.isSectionVisible) {
+            targetVideo.play().catch(() => {});
+          }
+        } catch (e) {}
+      }
     } else {
       this.handleSlideActivated();
     }
@@ -493,11 +521,18 @@ class ProductVideoCarousel {
    * Observers for viewport resize and section visibility
    */
   setupObservers() {
-    // Recalibrate center offset on resize
-    this.resizeObserver = new ResizeObserver(() => {
-      this.goToSlide(this.virtualIndex, false);
+    // Recalibrate center offset ONLY on actual horizontal width changes
+    let lastWidth = (this.viewport || this.container).clientWidth;
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newWidth = Math.round(entry.contentRect.width);
+        if (Math.abs(newWidth - lastWidth) > 2) {
+          lastWidth = newWidth;
+          this.goToSlide(this.virtualIndex, false);
+        }
+      }
     });
-    this.resizeObserver.observe(this.container);
+    this.resizeObserver.observe(this.viewport || this.container);
 
     // Pause video when section is not visible on screen
     if ('IntersectionObserver' in window) {

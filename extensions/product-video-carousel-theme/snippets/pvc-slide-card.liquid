@@ -1,8 +1,12 @@
 {% comment %}
   Product Video Carousel - Slide Card Snippet
 {% endcomment %}
-<div class="pvc-slide" data-slide-index="{{ index | default: 0 }}">
-  <div class="pvc-card is-inactive">
+{% assign is_initial_active = false %}
+{% if index == 0 %}
+  {% assign is_initial_active = true %}
+{% endif %}
+<div class="pvc-slide" data-slide-index="{{ index | default: 0 }}" {% if is_initial_active %}aria-current="true"{% endif %}>
+  <div class="pvc-card {% if is_initial_active %}is-active{% else %}is-inactive{% endif %}">
     <div class="pvc-media-wrapper">
       {% if video_src != blank %}
         <video class="pvc-video" src="{{ video_src }}" playsinline loop muted preload="metadata"></video>

@@ -173,8 +173,8 @@
               {% assign url = prod.url %}
               {% assign badge = block.settings.badge_tag %}
 
-              <div class="pvc-slide" data-slide-index="{{ rendered_count }}">
-                <div class="pvc-card is-inactive">
+              <div class="pvc-slide" data-slide-index="{{ rendered_count }}" {% if rendered_count == 0 %}aria-current="true"{% endif %}>
+                <div class="pvc-card {% if rendered_count == 0 %}is-active{% else %}is-inactive{% endif %}">
                   <div class="pvc-media-wrapper">
                     {% if video_src != blank %}
                       <video class="pvc-video" src="{{ video_src }}" playsinline loop muted preload="metadata"></video>
