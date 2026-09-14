@@ -2,7 +2,7 @@
 
 client_id = "a7aa08da6cb843f506c853e681a5a8ac"
 name = "Product Video Carousel"
-application_url = "https://example.com"
+application_url = "https://kimayahomes.com"
 embedded = true
 
 [webhooks]
@@ -16,3 +16,7 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [ ]
+
+[sidekick]
+extensions_summary = "Manage Product Video Carousel slides, video controls, and showcase products with video"
+
