@@ -1,0 +1,17 @@
+{
+  "carousel": {
+    "title": "Shop The Look",
+    "subtitle": "Watch real styling videos and shop featured products directly",
+    "prev_slide": "Previous video slide",
+    "next_slide": "Next video slide",
+    "play_video": "Play video",
+    "pause_video": "Pause video",
+    "unmute_video": "Unmute video",
+    "mute_video": "Mute video",
+    "view_product": "View Product",
+    "quick_shop": "Quick Shop",
+    "sale": "Sale",
+    "sold_out": "Sold Out",
+    "from": "From"
+  }
+}

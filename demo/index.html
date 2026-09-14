@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Video Carousel - Interactive Simulation & Test Suite</title>
+  
+  <!-- Carousel Component Stylesheet -->
+  <link rel="stylesheet" href="../extensions/product-video-carousel-theme/assets/product-video-carousel.css">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
+      background: #0b1120;
+      color: #e2e8f0;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Top Bar */
+    .topbar {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-badge {
+      background: #d97706;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.02em;
+    }
+    
+    .status-tags {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .spec-pill {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .spec-pill strong {
+      color: #fcd34d;
+    }
+
+    /* Simulation Control Deck */
+    .control-deck {
+      max-width: 1440px;
+      margin: 24px auto 0;
+      padding: 0 24px;
+    }
+    .deck-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .deck-info h3 {
+      margin: 0 0 4px;
+      font-size: 16px;
+      color: #f8fafc;
+    }
+    .deck-info p {
+      margin: 0;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .deck-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: #d97706;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #b45309;
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    /* Ratio Inspect Banner */
+    .ratio-inspector {
+      max-width: 1440px;
+      margin: 20px auto 0;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .ratio-box {
+      background: #131d33;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ratio-box-label {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .ratio-box-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    /* Modal for Adding Dynamic Slide */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.is-open {
+      display: flex;
+    }
+    .modal {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .modal h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      color: #f8fafc;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #f8fafc;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: #d97706;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Dynamic Slide Manager Drawer / Panel */
+    .manager-section {
+      max-width: 1440px;
+      margin: 40px auto 80px;
+      padding: 0 24px;
+    }
+    .manager-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .manager-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .slides-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .slide-manage-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .slide-manage-thumb {
+      width: 60px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #1e293b;
+      flex-shrink: 0;
+    }
+    .slide-manage-meta {
+      flex: 1;
+      min-width: 0;
+    }
+    .slide-manage-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .slide-manage-price {
+      font-size: 13px;
+      color: #fcd34d;
+      font-weight: 700;
+    }
+    .slide-manage-badge {
+      display: inline-block;
+      font-size: 10px;
+      background: #334155;
+      color: #94a3b8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+    .slide-manage-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .btn-icon {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-badge">Kimaya Homes</span>
+      <span class="brand-title">Product Video Carousel Simulation</span>
+    </div>
+    <div class="status-tags">
+      <div class="spec-pill">Active Ratio: <strong>344:573</strong></div>
+      <div class="spec-pill">Inactive Ratio: <strong>344:458</strong></div>
+      <div class="spec-pill">Center Lock: <strong>Always Centered</strong></div>
+      <div class="spec-pill">Loop: <strong>Infinite Seamless</strong></div>
+    </div>
+  </header>
+
+  <!-- Live Control Deck -->
+  <div class="control-deck">
+    <div class="deck-card">
+      <div class="deck-info">
+        <h3>Live Interactive Controller</h3>
+        <p>Test slide activation, video autoplay exclusivity, scale animation, and dynamic add/remove slides in real-time.</p>
+      </div>
+      <div class="deck-actions">
+        <button type="button" class="btn btn-secondary" id="btn-toggle-autoplay">Toggle Autoplay (Off)</button>
+        <button type="button" class="btn btn-primary" id="btn-open-add-modal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add Dynamic Slide
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Aspect Ratio Inspection Metrics -->
+  <div class="ratio-inspector">
+    <div class="ratio-box">
+      <span class="ratio-box-label">Active Item Aspect Ratio</span>
+      <span class="ratio-box-val">344 : 573 (1.666) - Video Playing</span>
+    </div>
+    <div class="ratio-box">
+      <span class="ratio-box-label">Inactive Item Aspect Ratio</span>
+      <span class="ratio-box-val">344 : 458 (1.331) - Thumbnail Mode</span>
+    </div>
+    <div class="ratio-box">
+      <span class="ratio-box-label">Current Active Slide Index</span>
+      <span class="ratio-box-val" id="metric-active-idx">Slide 1</span>
+    </div>
+  </div>
+
+  <!-- THE PRODUCT VIDEO CAROUSEL SECTION -->
+  <div 
+    class="pvc-section-wrapper"
+    style="
+      --pvc-card-base-width: 344px;
+      --pvc-gap: 28px;
+      --pvc-primary-color: #f8fafc;
+      --pvc-accent-color: #d97706;
+      --pvc-card-bg: #0f172a;
+      --pvc-card-radius: 22px;
+      background-color: transparent;
+      padding-top: 50px;
+      padding-bottom: 60px;
+    "
+    data-product-video-carousel
+    data-autoplay="false"
+    data-autoplay-interval="5000"
+    id="main-pvc-carousel"
+  >
+    <div class="pvc-container">
+      <div class="pvc-header">
+        <div class="pvc-subtitle">Featured Collection</div>
+        <h2 class="pvc-title" style="color: #f8fafc;">Curated Living In Motion</h2>
+        <div class="pvc-description" style="color: #94a3b8;">
+          Click or swipe slides. The active center item expands to 344:573 aspect ratio playing high definition video, with interactive product details and price.
+        </div>
+      </div>
+
+      <div class="pvc-carousel-container">
+        <!-- Prev Button -->
+        <button type="button" class="pvc-nav-btn pvc-prev-btn" aria-label="Previous slide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <!-- Next Button -->
+        <button type="button" class="pvc-nav-btn pvc-next-btn" aria-label="Next slide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+
+        <!-- Viewport -->
+        <div class="pvc-viewport">
+          <div class="pvc-track" id="pvc-track">
+            
+            <!-- Slide 1 -->
+            <div class="pvc-slide" data-slide-index="0">
+              <div class="pvc-card is-inactive">
+                <div class="pvc-media-wrapper">
+                  <video class="pvc-video" src="https://assets.mixkit.co/videos/42220/42220-720.mp4" playsinline loop muted preload="metadata"></video>
+                  <img class="pvc-thumbnail" src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&auto=format&fit=crop&q=80" alt="Velvet Lounge Chair" loading="lazy" />
+                  <div class="pvc-scrim"></div>
+                  <span class="pvc-top-badge">Best Seller</span>
+                  <div class="pvc-play-indicator">
+                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  </div>
+                  <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <line x1="23" y1="9" x2="17" y2="15"></line>
+                      <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                  </button>
+                  <div class="pvc-video-progress"><div class="pvc-progress-bar"></div></div>
+                </div>
+                <div class="pvc-compact-pill">
+                  <span class="pvc-compact-pill-title">Emerald Velvet Armchair</span>
+                  <span class="pvc-compact-pill-price">$480.00</span>
+                </div>
+                <a href="#product-emerald-armchair" class="pvc-product-card">
+                  <div class="pvc-product-info">
+                    <div class="pvc-product-text">
+                      <h3 class="pvc-product-title">Emerald Velvet Armchair</h3>
+                      <div class="pvc-price-container">
+                        <span class="pvc-price">$480.00</span>
+                        <span class="pvc-compare-price">$620.00</span>
+                        <span class="pvc-discount-tag">Save 22%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="pvc-cta-btn">
+                    View Product
+                    <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="pvc-slide" data-slide-index="1">
+              <div class="pvc-card is-inactive">
+                <div class="pvc-media-wrapper">
+                  <video class="pvc-video" src="https://assets.mixkit.co/videos/42223/42223-720.mp4" playsinline loop muted preload="metadata"></video>
+                  <img class="pvc-thumbnail" src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80" alt="Minimalist Nordic Sofa" loading="lazy" />
+                  <div class="pvc-scrim"></div>
+                  <span class="pvc-top-badge">Trending</span>
+                  <div class="pvc-play-indicator">
+                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  </div>
+                  <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <line x1="23" y1="9" x2="17" y2="15"></line>
+                      <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                  </button>
+                  <div class="pvc-video-progress"><div class="pvc-progress-bar"></div></div>
+                </div>
+                <div class="pvc-compact-pill">
+                  <span class="pvc-compact-pill-title">Minimalist Nordic 3-Seater</span>
+                  <span class="pvc-compact-pill-price">$1,150.00</span>
+                </div>
+                <a href="#product-nordic-sofa" class="pvc-product-card">
+                  <div class="pvc-product-info">
+                    <div class="pvc-product-text">
+                      <h3 class="pvc-product-title">Minimalist Nordic 3-Seater</h3>
+                      <div class="pvc-price-container">
+                        <span class="pvc-price">$1,150.00</span>
+                        <span class="pvc-compare-price">$1,390.00</span>
+                        <span class="pvc-discount-tag">Save $240</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="pvc-cta-btn">
+                    View Product
+                    <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="pvc-slide" data-slide-index="2">
+              <div class="pvc-card is-inactive">
+                <div class="pvc-media-wrapper">
+                  <video class="pvc-video" src="https://assets.mixkit.co/videos/42221/42221-720.mp4" playsinline loop muted preload="metadata"></video>
+                  <img class="pvc-thumbnail" src="https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80" alt="Sculptural Ceramic Vase" loading="lazy" />
+                  <div class="pvc-scrim"></div>
+                  <span class="pvc-top-badge">New Arrival</span>
+                  <div class="pvc-play-indicator">
+                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  </div>
+                  <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <line x1="23" y1="9" x2="17" y2="15"></line>
+                      <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                  </button>
+                  <div class="pvc-video-progress"><div class="pvc-progress-bar"></div></div>
+                </div>
+                <div class="pvc-compact-pill">
+                  <span class="pvc-compact-pill-title">Artisan Ceramic Sculptural Vase</span>
+                  <span class="pvc-compact-pill-price">$125.00</span>
+                </div>
+                <a href="#product-ceramic-vase" class="pvc-product-card">
+                  <div class="pvc-product-info">
+                    <div class="pvc-product-text">
+                      <h3 class="pvc-product-title">Artisan Ceramic Sculptural Vase</h3>
+                      <div class="pvc-price-container">
+                        <span class="pvc-price">$125.00</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="pvc-cta-btn">
+                    View Product
+                    <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Slide 4 -->
+            <div class="pvc-slide" data-slide-index="3">
+              <div class="pvc-card is-inactive">
+                <div class="pvc-media-wrapper">
+                  <video class="pvc-video" src="https://assets.mixkit.co/videos/42222/42222-720.mp4" playsinline loop muted preload="metadata"></video>
+                  <img class="pvc-thumbnail" src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80" alt="Brass Arc Floor Lamp" loading="lazy" />
+                  <div class="pvc-scrim"></div>
+                  <span class="pvc-top-badge">Editor's Pick</span>
+                  <div class="pvc-play-indicator">
+                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  </div>
+                  <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <line x1="23" y1="9" x2="17" y2="15"></line>
+                      <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                  </button>
+                  <div class="pvc-video-progress"><div class="pvc-progress-bar"></div></div>
+                </div>
+                <div class="pvc-compact-pill">
+                  <span class="pvc-compact-pill-title">Brushed Brass Arc Floor Lamp</span>
+                  <span class="pvc-compact-pill-price">$290.00</span>
+                </div>
+                <a href="#product-brass-lamp" class="pvc-product-card">
+                  <div class="pvc-product-info">
+                    <div class="pvc-product-text">
+                      <h3 class="pvc-product-title">Brushed Brass Arc Floor Lamp</h3>
+                      <div class="pvc-price-container">
+                        <span class="pvc-price">$290.00</span>
+                        <span class="pvc-compare-price">$340.00</span>
+                        <span class="pvc-discount-tag">Sale</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="pvc-cta-btn">
+                    View Product
+                    <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Slide 5 -->
+            <div class="pvc-slide" data-slide-index="4">
+              <div class="pvc-card is-inactive">
+                <div class="pvc-media-wrapper">
+                  <video class="pvc-video" src="https://assets.mixkit.co/videos/42220/42220-720.mp4" playsinline loop muted preload="metadata"></video>
+                  <img class="pvc-thumbnail" src="https://images.unsplash.com/photo-1540518614846-7ede433c4550?w=800&auto=format&fit=crop&q=80" alt="Solid Walnut Coffee Table" loading="lazy" />
+                  <div class="pvc-scrim"></div>
+                  <span class="pvc-top-badge">Handcrafted</span>
+                  <div class="pvc-play-indicator">
+                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  </div>
+                  <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <line x1="23" y1="9" x2="17" y2="15"></line>
+                      <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                  </button>
+                  <div class="pvc-video-progress"><div class="pvc-progress-bar"></div></div>
+                </div>
+                <div class="pvc-compact-pill">
+                  <span class="pvc-compact-pill-title">Solid Walnut Fluted Coffee Table</span>
+                  <span class="pvc-compact-pill-price">$690.00</span>
+                </div>
+                <a href="#product-coffee-table" class="pvc-product-card">
+                  <div class="pvc-product-info">
+                    <div class="pvc-product-text">
+                      <h3 class="pvc-product-title">Solid Walnut Fluted Coffee Table</h3>
+                      <div class="pvc-price-container">
+                        <span class="pvc-price">$690.00</span>
+                        <span class="pvc-compare-price">$850.00</span>
+                        <span class="pvc-discount-tag">Save 18%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="pvc-cta-btn">
+                    View Product
+                    <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                  </span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Pagination Dots -->
+        <div class="pvc-dots-wrapper"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Item Manager Section -->
+  <div class="manager-section">
+    <div class="manager-header">
+      <div class="manager-title">Dynamic Slides Manager (Add / Remove)</div>
+      <button type="button" class="btn btn-primary" id="btn-open-add-modal-2">
+        + Add Another Slide
+      </button>
+    </div>
+    <div class="slides-grid" id="slides-manager-grid"></div>
+  </div>
+
+  <!-- Add Slide Modal -->
+  <div class="modal-overlay" id="add-slide-modal">
+    <div class="modal">
+      <h2>Add Dynamic Video Slide</h2>
+      <form id="add-slide-form">
+        <div class="form-group">
+          <label>Product Title</label>
+          <input type="text" id="input-title" required placeholder="e.g. Bouclé Swivel Armchair" />
+        </div>
+        <div class="form-group">
+          <label>Price</label>
+          <input type="text" id="input-price" required placeholder="e.g. $520.00" />
+        </div>
+        <div class="form-group">
+          <label>Compare-at Price (Optional)</label>
+          <input type="text" id="input-compare-price" placeholder="e.g. $650.00" />
+        </div>
+        <div class="form-group">
+          <label>Badge Tag</label>
+          <input type="text" id="input-badge" placeholder="e.g. New Exclusive" />
+        </div>
+        <div class="form-group">
+          <label>Video Stream URL (MP4)</label>
+          <input type="url" id="input-video-url" required value="https://assets.mixkit.co/videos/42220/42220-720.mp4" />
+        </div>
+        <div class="form-group">
+          <label>Thumbnail Image URL</label>
+          <input type="url" id="input-thumb-url" required value="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=800&auto=format&fit=crop&q=80" />
+        </div>
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Slide to Carousel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Carousel Engine -->
+  <script src="../extensions/product-video-carousel-theme/assets/product-video-carousel.js"></script>
+
+  <!-- Simulation Control Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const carouselEl = document.getElementById('main-pvc-carousel');
+      const instance = carouselEl._pvcInstance;
+      const metricIdx = document.getElementById('metric-active-idx');
+      const slidesGrid = document.getElementById('slides-manager-grid');
+      const modal = document.getElementById('add-slide-modal');
+      const form = document.getElementById('add-slide-form');
+
+      // Update metric index indicator on slide change
+      function updateActiveIndicator() {
+        if (instance) {
+          metricIdx.textContent = `Slide ${instance.currentIndex + 1} of ${instance.slideCount}`;
+        }
+      }
+
+      // Sync active metric on transitions
+      carouselEl.querySelector('.pvc-track').addEventListener('transitionend', updateActiveIndicator);
+      carouselEl.querySelectorAll('.pvc-nav-btn').forEach(b => b.addEventListener('click', () => setTimeout(updateActiveIndicator, 50)));
+      updateActiveIndicator();
+
+      // Render Dynamic Slides List
+      function refreshSlidesManager() {
+        slidesGrid.innerHTML = '';
+        instance.originalSlides.forEach((slide, idx) => {
+          const title = slide.querySelector('.pvc-product-title')?.textContent || `Slide ${idx + 1}`;
+          const price = slide.querySelector('.pvc-price')?.textContent || '';
+          const thumb = slide.querySelector('.pvc-thumbnail')?.src || '';
+          const badge = slide.querySelector('.pvc-top-badge')?.textContent || '';
+
+          const card = document.createElement('div');
+          card.className = 'slide-manage-card';
+          card.innerHTML = `
+            <img class="slide-manage-thumb" src="${thumb}" alt="${title}" />
+            <div class="slide-manage-meta">
+              <div class="slide-manage-title">${title}</div>
+              <div class="slide-manage-price">${price}</div>
+              ${badge ? `<span class="slide-manage-badge">${badge}</span>` : ''}
+            </div>
+            <div class="slide-manage-actions">
+              <button type="button" class="btn-icon btn-remove" data-index="${idx}" title="Remove slide">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          `;
+          slidesGrid.appendChild(card);
+        });
+
+        // Bind delete buttons
+        slidesGrid.querySelectorAll('.btn-remove').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const removeIdx = parseInt(e.currentTarget.dataset.index, 10);
+            if (instance.slideCount <= 2) {
+              alert('The carousel requires at least 2 slides to maintain infinite rotation.');
+              return;
+            }
+            instance.removeSlide(removeIdx);
+            refreshSlidesManager();
+            updateActiveIndicator();
+          });
+        });
+      }
+
+      refreshSlidesManager();
+
+      // Autoplay toggle
+      const autoplayBtn = document.getElementById('btn-toggle-autoplay');
+      let isAutoplaying = false;
+      autoplayBtn.addEventListener('click', () => {
+        isAutoplaying = !isAutoplaying;
+        if (isAutoplaying) {
+          instance.options.autoplay = true;
+          instance.startAutoplay();
+          autoplayBtn.textContent = 'Toggle Autoplay (On)';
+          autoplayBtn.classList.remove('btn-secondary');
+          autoplayBtn.classList.add('btn-primary');
+        } else {
+          instance.options.autoplay = false;
+          instance.stopAutoplay();
+          autoplayBtn.textContent = 'Toggle Autoplay (Off)';
+          autoplayBtn.classList.remove('btn-primary');
+          autoplayBtn.classList.add('btn-secondary');
+        }
+      });
+
+      // Modal Open / Close
+      const openModal = () => modal.classList.add('is-open');
+      const closeModal = () => modal.classList.remove('is-open');
+
+      document.getElementById('btn-open-add-modal').addEventListener('click', openModal);
+      document.getElementById('btn-open-add-modal-2').addEventListener('click', openModal);
+      document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      // Form submit for adding dynamic slide
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('input-title').value;
+        const price = document.getElementById('input-price').value;
+        const comparePrice = document.getElementById('input-compare-price').value;
+        const badge = document.getElementById('input-badge').value;
+        const videoUrl = document.getElementById('input-video-url').value;
+        const thumbUrl = document.getElementById('input-thumb-url').value;
+
+        instance.addSlide({
+          productTitle: title,
+          productPrice: price,
+          comparePrice: comparePrice,
+          badge: badge,
+          videoUrl: videoUrl,
+          thumbnailUrl: thumbUrl,
+          productUrl: '#'
+        });
+
+        refreshSlidesManager();
+        updateActiveIndicator();
+        closeModal();
+        form.reset();
+      });
+    });
+  </script>
+</body>
+</html>

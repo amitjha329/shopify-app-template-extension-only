@@ -1,0 +1,652 @@
+/**
+ * Product Video Carousel - Stylesheet
+ * Kimaya Homes / Shopify Online Store 2.0
+ * 
+ * Features:
+ * - Active item in portrait 344:573 aspect ratio with auto-playing video
+ * - Non-active items in 344:458 aspect ratio with thumbnail preview
+ * - Scale & height transition animation when switching items
+ * - Infinite centered layout with hardware-accelerated transform
+ * - Product link with price overlay on active item
+ * - Mute/Unmute floating control, navigation buttons, responsive touch design
+ */
+
+:root {
+  --pvc-card-base-width: 344px;
+  --pvc-ratio-active-w: 344;
+  --pvc-ratio-active-h: 573;
+  --pvc-ratio-inactive-w: 344;
+  --pvc-ratio-inactive-h: 458;
+  --pvc-gap: 28px;
+  --pvc-primary-color: #111827;
+  --pvc-accent-color: #d97706;
+  --pvc-card-bg: #0f172a;
+  --pvc-card-radius: 20px;
+  --pvc-font-family: inherit;
+}
+
+/* Section Wrapper */
+.pvc-section-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 60px 0 70px;
+  box-sizing: border-box;
+  font-family: var(--pvc-font-family);
+}
+
+.pvc-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Section Header */
+.pvc-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.pvc-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pvc-accent-color);
+  margin-bottom: 8px;
+}
+
+.pvc-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--pvc-primary-color);
+  line-height: 1.25;
+  margin: 0 0 12px;
+}
+
+@media (min-width: 768px) {
+  .pvc-title {
+    font-size: 40px;
+  }
+}
+
+.pvc-description {
+  font-size: 16px;
+  color: #64748b;
+  max-width: 620px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Carousel Main Container */
+.pvc-carousel-container {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Viewport & Track */
+.pvc-viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 30px 0;
+  box-sizing: border-box;
+  cursor: grab;
+}
+
+.pvc-viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.pvc-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  box-sizing: border-box;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+.pvc-track.is-animating {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Slide Wrapper */
+.pvc-slide {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--pvc-card-base-width);
+  margin-right: var(--pvc-gap);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 10px 0;
+}
+
+/* Slide Card */
+.pvc-card {
+  position: relative;
+  width: 100%;
+  border-radius: var(--pvc-card-radius);
+  overflow: hidden;
+  background-color: var(--pvc-card-bg);
+  box-sizing: border-box;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  transform-origin: center center;
+  transition: 
+    transform 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    height 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    aspect-ratio 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 0.45s ease,
+    box-shadow 0.45s ease,
+    filter 0.45s ease;
+  will-change: transform, height, aspect-ratio;
+  cursor: pointer;
+}
+
+/* NON-ACTIVE ITEM STATE */
+/* Exact 344:458 aspect ratio, scaled down, thumbnail displayed, video stopped */
+.pvc-card.is-inactive {
+  aspect-ratio: 344 / 458;
+  height: calc(var(--pvc-card-base-width) * 458 / 344);
+  transform: scale(0.9) translateZ(0);
+  opacity: 0.72;
+  filter: brightness(0.92);
+}
+
+.pvc-card.is-inactive:hover {
+  opacity: 0.88;
+  filter: brightness(0.98);
+  transform: scale(0.93) translateZ(0);
+}
+
+/* ACTIVE ITEM STATE */
+/* Exact 344:573 aspect ratio, full scale 1, video playing, centered */
+.pvc-card.is-active {
+  aspect-ratio: 344 / 573;
+  height: calc(var(--pvc-card-base-width) * 573 / 344);
+  transform: scale(1) translateZ(0);
+  opacity: 1;
+  filter: brightness(1);
+  z-index: 10;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  cursor: default;
+}
+
+/* Media Box (Video + Thumbnail Stack) */
+.pvc-media-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+/* Video Element */
+.pvc-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.pvc-card.is-active .pvc-video {
+  opacity: 1;
+}
+
+/* Thumbnail Image (Shows on non-active items) */
+.pvc-thumbnail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.pvc-card.is-active .pvc-thumbnail {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Media Scrim / Gradient Overlay */
+.pvc-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0) 30%,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Top Badge / Tag */
+.pvc-top-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 3;
+  padding: 5px 12px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Floating Audio Mute/Unmute Button (Active Item) */
+.pvc-audio-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pvc-card.is-active .pvc-audio-toggle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pvc-audio-toggle:hover {
+  transform: scale(1.08);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.pvc-audio-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Play Icon Overlay (Non-Active Items indicator) */
+.pvc-play-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 3;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+}
+
+.pvc-play-indicator svg {
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  fill: currentColor;
+}
+
+.pvc-card.is-active .pvc-play-indicator {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.7);
+  pointer-events: none;
+}
+
+/* Video Progress Line */
+.pvc-video-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  z-index: 5;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pvc-card.is-active .pvc-video-progress {
+  opacity: 1;
+}
+
+.pvc-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--pvc-accent-color);
+  transition: width 0.1s linear;
+}
+
+/* BOTTOM PRODUCT CARD / LINK OVERLAY (Active Item) */
+.pvc-product-card {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 4;
+  padding: 14px 16px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #fff;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease, background 0.2s ease;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+}
+
+.pvc-card.is-active .pvc-product-card {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.pvc-product-card:hover {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.pvc-product-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pvc-product-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pvc-product-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.pvc-price-container {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pvc-price {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fcd34d; /* Bright warm gold */
+}
+
+.pvc-compare-price {
+  font-size: 12px;
+  font-weight: 400;
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.pvc-discount-tag {
+  font-size: 10px;
+  font-weight: 700;
+  background: #ef4444;
+  color: #ffffff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* View Product CTA Button */
+.pvc-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-sizing: border-box;
+}
+
+.pvc-product-card:hover .pvc-cta-btn {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.pvc-cta-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.pvc-product-card:hover .pvc-cta-btn svg {
+  transform: translateX(3px);
+}
+
+/* Inactive Compact Product Pill */
+.pvc-compact-pill {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 3;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  box-sizing: border-box;
+}
+
+.pvc-compact-pill-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+}
+
+.pvc-compact-pill-price {
+  color: #fcd34d;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pvc-card.is-active .pvc-compact-pill {
+  opacity: 0;
+}
+
+/* NAVIGATION BUTTONS */
+.pvc-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  padding: 0;
+}
+
+.pvc-nav-btn:hover {
+  background: #0f172a;
+  color: #ffffff;
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+}
+
+.pvc-nav-btn:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.pvc-nav-btn.pvc-prev-btn {
+  left: 20px;
+}
+
+.pvc-nav-btn.pvc-next-btn {
+  right: 20px;
+}
+
+.pvc-nav-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* PAGINATION DOTS */
+.pvc-dots-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.pvc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #cbd5e1;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.pvc-dot.is-active {
+  width: 26px;
+  background: var(--pvc-primary-color);
+}
+
+/* RESPONSIVE ADAPTATIONS */
+@media (max-width: 768px) {
+  :root {
+    --pvc-card-base-width: 280px;
+    --pvc-gap: 16px;
+  }
+  
+  .pvc-section-wrapper {
+    padding: 40px 0 50px;
+  }
+  
+  .pvc-nav-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .pvc-nav-btn.pvc-prev-btn {
+    left: 8px;
+  }
+  
+  .pvc-nav-btn.pvc-next-btn {
+    right: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --pvc-card-base-width: 260px;
+    --pvc-gap: 12px;
+  }
+  
+  .pvc-product-card {
+    padding: 10px 12px;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+  }
+  
+  .pvc-product-title {
+    font-size: 13px;
+  }
+  
+  .pvc-price {
+    font-size: 13px;
+  }
+  
+  .pvc-cta-btn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+}

@@ -1,8 +1,10 @@
 {
-  "name": "ui-ext-hosted-jam",
+  "name": "product-video-carousel",
   "version": "1.0.0",
   "license": "UNLICENSED",
-  "workspaces": ["extensions/*"],
+  "workspaces": [
+    "extensions/*"
+  ],
   "scripts": {
     "shopify": "shopify",
     "build": "shopify app build",
@@ -11,10 +13,12 @@
     "generate": "shopify app generate",
     "deploy": "shopify app deploy"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@shopify/cli": "4.8.0"
+  },
   "trustedDependencies": [
     "@shopify/plugin-cloudflare"
   ],
-  "author": "mitch",
+  "author": "amitj",
   "private": true
 }

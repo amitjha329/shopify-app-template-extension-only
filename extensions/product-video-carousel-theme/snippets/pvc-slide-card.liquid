@@ -1,0 +1,62 @@
+{% comment %}
+  Product Video Carousel - Slide Card Snippet
+{% endcomment %}
+<div class="pvc-slide" data-slide-index="{{ index | default: 0 }}">
+  <div class="pvc-card is-inactive">
+    <div class="pvc-media-wrapper">
+      {% if video_src != blank %}
+        <video class="pvc-video" src="{{ video_src }}" playsinline loop muted preload="metadata"></video>
+      {% endif %}
+      {% if thumb_src != blank %}
+        <img class="pvc-thumbnail" src="{{ thumb_src }}" alt="{{ title | escape }}" loading="lazy" />
+      {% else %}
+        <div class="pvc-thumbnail" style="background: linear-gradient(135deg, #1e293b, #0f172a);"></div>
+      {% endif %}
+      <div class="pvc-scrim"></div>
+      
+      {% if badge != blank %}
+        <span class="pvc-top-badge">{{ badge | escape }}</span>
+      {% endif %}
+
+      <div class="pvc-play-indicator">
+        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      </div>
+
+      <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+      </button>
+
+      <div class="pvc-video-progress">
+        <div class="pvc-progress-bar"></div>
+      </div>
+    </div>
+
+    <div class="pvc-compact-pill">
+      <span class="pvc-compact-pill-title">{{ title | escape }}</span>
+      <span class="pvc-compact-pill-price">{{ price }}</span>
+    </div>
+
+    <a href="{{ url | default: '#' }}" class="pvc-product-card">
+      <div class="pvc-product-info">
+        <div class="pvc-product-text">
+          <h3 class="pvc-product-title">{{ title | escape }}</h3>
+          <div class="pvc-price-container">
+            <span class="pvc-price">{{ price }}</span>
+            {% if compare_price != blank and compare_price != price %}
+              <span class="pvc-compare-price">{{ compare_price }}</span>
+              <span class="pvc-discount-tag">Sale</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <span class="pvc-cta-btn">
+        View Product
+        <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </span>
+    </a>
+  </div>
+</div>

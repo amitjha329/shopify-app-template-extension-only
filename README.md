@@ -1,156 +1,84 @@
-# Shopify App Template - Extension Only
+# Product Video Carousel (Shopify Online Store 2.0 App)
 
-This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using [Preact](https://preactjs.com/) and [Vite](https://vite.dev/). It uses Shopify's [Direct API access](https://shopify.dev/docs/api/app-home#direct-api-access) and [App Bridge](https://shopify.dev/docs/api/app-bridge) to make authenticated calls to the Shopify Admin API directly from the browser — no server required.
+A high-converting, video-first product carousel Shopify application and theme extension designed for **Kimaya Homes**.
 
-Rather than cloning this repo, follow the [Quick Start steps](#quick-start) below.
+---
 
-## Quick start
+## 🌟 Key Features & Requirements
 
-### Prerequisites
+- **Exact Aspect Ratios**:
+  - **Active Item (Portrait)**: `344:573` aspect ratio with video autoplay.
+  - **Non-Active Items**: `344:458` aspect ratio with high-resolution thumbnail preview.
+- **Exclusive Video Playback**:
+  - Only the active centered item plays its video (`autoplay`, `muted`, `loop`, `playsinline`).
+  - Inactive items automatically pause, reset, and display their poster thumbnail to optimize battery, CPU, and bandwidth.
+  - Floating sound toggle button on the active slide allows shoppers to unmute and hear product audio.
+- **Active Item Product Link & Price**:
+  - Sleek glassmorphism overlay card at the bottom of the active card.
+  - Displays product title, live price, compare-at price, and savings badge.
+  - Direct clickable link to the product details page.
+- **Infinite Centered Carousel**:
+  - Seamless infinite loop wrap-around in both directions.
+  - Active item is **always positioned at the horizontal center** of the viewport.
+  - Smooth hardware-accelerated **scale animation** (`transform` and `aspect-ratio` transition) when sliding between items.
+- **Carousel Controls**:
+  - Modern Chevron Next / Prev navigation buttons.
+  - Pagination indicator dots.
+  - Touch swipe / mouse drag gestures with flick velocity detection.
+  - Keyboard arrow key navigation (`←` and `→`).
+- **Dynamic Items (Add / Remove)**:
+  - **Theme App Extension**: Configurable slots in theme customizer with toggle switches, product pickers, and video pickers, plus optional Metafield JSON mode.
+  - **Native Theme Section**: Integrated into `funore-theme/sections/product-video-carousel.liquid` with Shopify `blocks` support—allowing merchants to click **"Add block"** to add unlimited dynamic video slides, reorder them via drag-and-drop, or delete them.
+  - **Interactive Simulation Demo**: Real-time Add/Remove slide manager in `demo/index.html`.
 
-Before you begin, you'll need to [download and install the Shopify CLI](https://shopify.dev/docs/apps/tools/cli/getting-started) if you haven't already.
+---
 
-### Setup
+## 📁 Project Structure
 
-```shell
-shopify app init --template=https://github.com/Shopify/shopify-app-template-extension-only
+```
+product-video-carousel/
+├── package.json                          # App scripts & Shopify CLI dependencies
+├── shopify.app.toml                     # Shopify App configuration
+├── extensions/
+│   ├── product-video-carousel-theme/    # Theme App Extension (Online Store 2.0)
+│   │   ├── shopify.extension.toml       # Theme extension manifest
+│   │   ├── blocks/
+│   │   │   └── product_video_carousel.liquid # App block (Target: section)
+│   │   ├── assets/
+│   │   │   ├── product-video-carousel.css   # Aspect ratios (344:573 & 344:458), animations
+│   │   │   └── product-video-carousel.js    # Infinite centered carousel engine
+│   │   ├── snippets/
+│   │   │   └── pvc-slide-card.liquid        # Reusable slide card markup
+│   │   └── locales/
+│   │       └── en.default.json
+│   └── app-home/                        # Polaris App Home Extension (Admin Dashboard)
+└── demo/
+    └── index.html                       # Standalone interactive browser simulation
 ```
 
-### Local Development
+---
 
-```shell
-shopify app dev
+## 🚀 How to Run & Test
+
+### 1. Standalone Browser Simulation (Instant Test)
+Open the standalone demo file in any web browser to test all carousel behaviors with live sample videos:
+```
+D:\Projects\Shopify\KimayaHomes\product-video-carousel\demo\index.html
 ```
 
-Press P to open the URL to your app. Once you click install, you can start development.
-
-Local development is powered by [Shopify CLI](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally). It logs into your account, connects to an app, provides environment variables, updates remote config, creates a tunnel and provides commands to generate extensions.
-
-## How it works
-
-### Authentication
-
-This template uses [Shopify managed installation](https://shopify.dev/docs/apps/build/authentication-authorization/app-installation). Shopify handles the OAuth flow and app installation automatically. Once installed, the app is fully embedded in the Shopify Admin.
-
-### Querying data
-
-This template uses [Direct API access](https://shopify.dev/docs/api/app-home#direct-api-access) — the Shopify Admin API is called directly from the browser using App Bridge. No server-side code is needed.
-
-This template comes pre-configured with examples of querying data using GraphQL with direct API access, and using [metaobjects](https://shopify.dev/docs/apps/custom-data/metaobjects) to store and retrieve structured app data — see [/shared/models/faq.ts](./shared/models/faq.ts).
-
-### App Bridge
-
-[App Bridge](https://shopify.dev/docs/api/app-bridge) is loaded automatically in embedded apps.
-
-### Polaris Web Components
-
-This template uses [Polaris Web Components](https://shopify.dev/docs/api/app-home/web-components) — the native custom element version of Polaris that works in any framework (including Preact). No additional package installation is required as they are provided automatically in the Shopify Admin iframe.
-
-## GraphQL Codegen
-
-This template is pre-configured with [GraphQL Codegen](https://the-guild.dev/graphql/codegen) to generate TypeScript types from your GraphQL queries.
-
-To regenerate types after updating queries:
-
-```shell
-npm run codegen
-```
-
-To watch for changes:
-
-```shell
-npm run codegen:watch
-```
-
-## Build
-
-Build the app by running:
-
-Using npm:
-
-```shell
+### 2. Build Extensions with Shopify CLI
+```bash
 npm run build
 ```
 
-Using yarn:
-
-```shell
-yarn build
+### 3. Run Dev Server with Shopify CLI
+To link your development store and preview live:
+```bash
+npm run dev
 ```
 
-Using pnpm:
-
-```shell
-pnpm run build
-```
-
-## Shopify Dev MCP
-
-This template is configured with the Shopify Dev MCP. This instructs [Cursor](https://cursor.com/), [GitHub Copilot](https://github.com/features/copilot), [Claude Code](https://claude.com/product/claude-code), and [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) to use the Shopify Dev MCP.
-
-For more information on the Shopify Dev MCP please read [the documentation](https://shopify.dev/docs/apps/build/devmcp).
-
-## Metafields and Metaobjects
-
-This template uses [metaobjects](https://shopify.dev/docs/apps/custom-data/metaobjects) and [metafields](https://shopify.dev/docs/apps/custom-data/metafields) to store structured app data without a custom database.
-
-### Metaobject: FAQ
-
-The template defines a `faq` metaobject type for storing FAQ entries. Each FAQ has a question, answer, a flag to control visibility on the FAQ page, and optional product associations.
-
-Defined in `shopify.app.toml`:
-
-```toml
-[metaobjects.app.faq]
-name = "FAQ"
-
-[metaobjects.app.faq.fields.question]
-name = "Question"
-type = "single_line_text_field"
-required = true
-
-[metaobjects.app.faq.fields.answer]
-name = "Answer"
-type = "multi_line_text_field"
-required = true
-
-[metaobjects.app.faq.fields.show_on_faq_page]
-name = "Show on FAQ page"
-type = "boolean"
-
-[metaobjects.app.faq.fields.products]
-name = "Products"
-type = "list.product_reference"
-```
-
-### Metafield: Product FAQ
-
-A metafield definition links individual products to a FAQ metaobject entry, allowing merchants to associate a FAQ with specific products.
-
-```toml
-[product.metafields.app.faq]
-name = "FAQ"
-description = "FAQ for this product"
-type = "metaobject_reference<$app:faq>"
-access.admin = "merchant_read_write"
-```
-
-These definitions are automatically synced to Shopify when you run `shopify app dev` or `shopify app deploy`. See [/shared/models/faq.ts](./shared/models/faq.ts) for the client-side model that reads and writes these metaobjects via the Admin GraphQL API.
-
-## Resources
-
-Preact & Vite:
-
-- [Preact docs](https://preactjs.com/guide/v10/getting-started)
-- [Vite docs](https://vite.dev/)
-
-Shopify:
-
-- [Intro to Shopify apps](https://shopify.dev/docs/apps/getting-started)
-- [Direct API access](https://shopify.dev/docs/api/app-home#direct-api-access)
-- [Shopify CLI](https://shopify.dev/docs/apps/tools/cli)
-- [App Bridge](https://shopify.dev/docs/api/app-bridge)
-- [Polaris Web Components](https://shopify.dev/docs/api/app-home/web-components)
-- [Metaobjects](https://shopify.dev/docs/apps/custom-data/metaobjects)
-- [App extensions](https://shopify.dev/docs/apps/app-extensions/list)
-- [Shopify Functions](https://shopify.dev/docs/api/functions)
+### 4. Use in Theme (`funore-theme`)
+The section is already available directly in `funore-theme/sections/product-video-carousel.liquid`.
+1. Open Shopify Theme Customizer (`funore-theme`).
+2. Click **Add section** &gt; **Product Video Carousel**.
+3. Under the section, click **Add Video Slide** to add as many slides as you want!

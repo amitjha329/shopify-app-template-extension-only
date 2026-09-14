@@ -1,0 +1,542 @@
+{% comment %}
+  Product Video Carousel - App Block (Target: Section)
+  Kimaya Homes / Shopify Online Store 2.0
+  
+  Features:
+  - Dynamic products via 'product_list' or 'collection'
+  - Active item in portrait 344:573 aspect ratio with auto-playing video
+  - Non-active items in 344:458 aspect ratio with thumbnail preview
+  - Smooth scale animation and infinite centered carousel
+  - Product price, title, and link at the bottom of the active item
+  - Video extracted from product.media, metafields, or custom video URLs
+  - Strict compliance with Shopify App Block type limits
+{% endcomment %}
+
+{% assign unique_id = 'pvc-' | append: block.id %}
+{% assign metafield_slides = app.metafields.product_video_carousel.slides.value 
+  | default: shop.metafields.product_video_carousel.slides.value 
+%}
+
+<div 
+  id="{{ unique_id }}"
+  class="pvc-section-wrapper"
+  style="
+    --pvc-card-base-width: {{ block.settings.card_width | default: 344 }}px;
+    --pvc-gap: {{ block.settings.slide_gap | default: 28 }}px;
+    --pvc-primary-color: {{ block.settings.heading_color | default: '#111827' }};
+    --pvc-accent-color: {{ block.settings.accent_color | default: '#d97706' }};
+    --pvc-card-bg: #0f172a;
+    --pvc-card-radius: {{ block.settings.card_border_radius | default: 20 }}px;
+    background-color: {{ block.settings.section_background | default: '#f8fafc' }};
+    padding-top: 60px;
+    padding-bottom: 70px;
+  "
+  data-product-video-carousel
+  data-autoplay="{{ block.settings.enable_autoplay }}"
+  data-autoplay-interval="{{ block.settings.autoplay_interval | default: 5000 }}"
+>
+  <div class="pvc-container">
+    {% if block.settings.title != blank or block.settings.subtitle != blank %}
+      <div class="pvc-header">
+        {% if block.settings.subtitle != blank %}
+          <div class="pvc-subtitle">{{ block.settings.subtitle | escape }}</div>
+        {% endif %}
+        {% if block.settings.title != blank %}
+          <h2 class="pvc-title">{{ block.settings.title | escape }}</h2>
+        {% endif %}
+        {% if block.settings.description != blank %}
+          <div class="pvc-description">{{ block.settings.description | escape }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="pvc-carousel-container">
+      {% comment %} Navigation Arrows {% endcomment %}
+      <button type="button" class="pvc-nav-btn pvc-prev-btn" aria-label="Previous slide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <button type="button" class="pvc-nav-btn pvc-next-btn" aria-label="Next slide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="pvc-viewport">
+        <div class="pvc-track">
+          {% assign rendered_count = 0 %}
+
+          {% comment %} Fallback video URL from single 'video' setting {% endcomment %}
+          {% assign fallback_video_url = '' %}
+          {% if block.settings.fallback_video != blank %}
+            {% for source in block.settings.fallback_video.sources %}
+              {% if source.format == 'mp4' %}
+                {% assign fallback_video_url = source.url %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+            {% if fallback_video_url == blank and block.settings.fallback_video.sources.size > 0 %}
+              {% assign fallback_video_url = block.settings.fallback_video.sources[0].url %}
+            {% endif %}
+          {% endif %}
+
+          {% comment %} Fallback thumbnail from single 'image_picker' setting {% endcomment %}
+          {% assign fallback_thumb_url = '' %}
+          {% if block.settings.fallback_thumbnail != blank %}
+            {% assign fallback_thumb_url = block.settings.fallback_thumbnail | image_url: width: 800 %}
+          {% elsif block.settings.fallback_video.preview_image != blank %}
+            {% assign fallback_thumb_url = block.settings.fallback_video.preview_image | image_url: width: 800 %}
+          {% endif %}
+
+          {% comment %} 1. Render from Shop / App Metafields if available {% endcomment %}
+          {% if metafield_slides != blank %}
+            {% for item in metafield_slides %}
+              {% assign prod = all_products[item.product_handle] %}
+              {% assign video_src = item.video_url %}
+              {% assign thumb_src = item.thumbnail_url | default: prod.featured_image | image_url: width: 800 %}
+              {% assign title = item.title | default: prod.title | default: 'Featured Product' %}
+              {% assign price = item.price | default: prod.price | money %}
+              {% assign comp_price = item.compare_at_price | default: prod.compare_at_price | money %}
+              {% assign url = item.url | default: prod.url | default: '#' %}
+              {% assign badge = item.badge %}
+
+              {% render 'pvc-slide-card',
+                video_src: video_src,
+                thumb_src: thumb_src,
+                title: title,
+                price: price,
+                compare_price: comp_price,
+                url: url,
+                badge: badge,
+                index: forloop.index0
+              %}
+              {% assign rendered_count = rendered_count | plus: 1 %}
+            {% endfor %}
+          {% endif %}
+
+          {% comment %} 2. Render from product_list setting {% endcomment %}
+          {% if rendered_count == 0 and block.settings.product_list != blank and block.settings.product_list.count > 0 %}
+            {% for prod in block.settings.product_list %}
+              {% assign video_src = '' %}
+              {% assign thumb_src = '' %}
+
+              {% comment %} Find MP4 video in product media {% endcomment %}
+              {% for media in prod.media %}
+                {% if media.media_type == 'video' %}
+                  {% for source in media.sources %}
+                    {% if source.format == 'mp4' %}
+                      {% assign video_src = source.url %}
+                      {% break %}
+                    {% endif %}
+                  {% endfor %}
+                  {% if media.preview_image != blank and thumb_src == blank %}
+                    {% assign thumb_src = media.preview_image | image_url: width: 800 %}
+                  {% endif %}
+                  {% if video_src != blank %}{% break %}{% endif %}
+                {% endif %}
+              {% endfor %}
+
+              {% comment %} Check direct custom video URL slot fallback {% endcomment %}
+              {% if video_src == blank %}
+                {% case forloop.index %}
+                  {% when 1 %}
+                    {% assign video_src = block.settings.video_url_1 %}
+                  {% when 2 %}
+                    {% assign video_src = block.settings.video_url_2 %}
+                  {% when 3 %}
+                    {% assign video_src = block.settings.video_url_3 %}
+                  {% when 4 %}
+                    {% assign video_src = block.settings.video_url_4 %}
+                {% endcase %}
+              {% endif %}
+
+              {% comment %} Check metafield on product {% endcomment %}
+              {% if video_src == blank and prod.metafields.custom.video_url != blank %}
+                {% assign video_src = prod.metafields.custom.video_url.value | default: prod.metafields.custom.video_url %}
+              {% endif %}
+
+              {% if video_src == blank %}
+                {% assign video_src = fallback_video_url %}
+              {% endif %}
+
+              {% if thumb_src == blank and prod.featured_image != blank %}
+                {% assign thumb_src = prod.featured_image | image_url: width: 800 %}
+              {% elsif thumb_src == blank %}
+                {% assign thumb_src = fallback_thumb_url %}
+              {% endif %}
+
+              {% assign title = prod.title %}
+              {% assign price = prod.price | money %}
+              {% assign comp_price = prod.compare_at_price | money %}
+              {% assign url = prod.url %}
+              {% assign badge = block.settings.badge_tag %}
+
+              <div class="pvc-slide" data-slide-index="{{ rendered_count }}">
+                <div class="pvc-card is-inactive">
+                  <div class="pvc-media-wrapper">
+                    {% if video_src != blank %}
+                      <video class="pvc-video" src="{{ video_src }}" playsinline loop muted preload="metadata"></video>
+                    {% endif %}
+                    {% if thumb_src != blank %}
+                      <img class="pvc-thumbnail" src="{{ thumb_src }}" alt="{{ title | escape }}" loading="lazy" />
+                    {% else %}
+                      <div class="pvc-thumbnail" style="background: linear-gradient(135deg, #1e293b, #0f172a);"></div>
+                    {% endif %}
+                    <div class="pvc-scrim"></div>
+                    
+                    {% if badge != blank %}
+                      <span class="pvc-top-badge">{{ badge | escape }}</span>
+                    {% endif %}
+
+                    <div class="pvc-play-indicator">
+                      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </div>
+
+                    <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                        <line x1="17" y1="9" x2="23" y2="15"></line>
+                      </svg>
+                    </button>
+
+                    <div class="pvc-video-progress">
+                      <div class="pvc-progress-bar"></div>
+                    </div>
+                  </div>
+
+                  <div class="pvc-compact-pill">
+                    <span class="pvc-compact-pill-title">{{ title | escape }}</span>
+                    <span class="pvc-compact-pill-price">{{ price }}</span>
+                  </div>
+
+                  <a href="{{ url }}" class="pvc-product-card">
+                    <div class="pvc-product-info">
+                      <div class="pvc-product-text">
+                        <h3 class="pvc-product-title">{{ title | escape }}</h3>
+                        <div class="pvc-price-container">
+                          <span class="pvc-price">{{ price }}</span>
+                          {% if prod.compare_at_price > prod.price %}
+                            <span class="pvc-compare-price">{{ comp_price }}</span>
+                            <span class="pvc-discount-tag">Sale</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <span class="pvc-cta-btn">
+                      View Product
+                      <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </span>
+                  </a>
+                </div>
+              </div>
+
+              {% assign rendered_count = rendered_count | plus: 1 %}
+            {% endfor %}
+          {% endif %}
+
+          {% comment %} 3. Render from Collection setting {% endcomment %}
+          {% if rendered_count == 0 and block.settings.collection != blank %}
+            {% for prod in block.settings.collection.products limit: 8 %}
+              {% assign video_src = '' %}
+              {% assign thumb_src = '' %}
+
+              {% for media in prod.media %}
+                {% if media.media_type == 'video' %}
+                  {% for source in media.sources %}
+                    {% if source.format == 'mp4' %}
+                      {% assign video_src = source.url %}
+                      {% break %}
+                    {% endif %}
+                  {% endfor %}
+                  {% if media.preview_image != blank and thumb_src == blank %}
+                    {% assign thumb_src = media.preview_image | image_url: width: 800 %}
+                  {% endif %}
+                  {% if video_src != blank %}{% break %}{% endif %}
+                {% endif %}
+              {% endfor %}
+
+              {% if video_src == blank %}
+                {% assign video_src = fallback_video_url %}
+              {% endif %}
+
+              {% if thumb_src == blank and prod.featured_image != blank %}
+                {% assign thumb_src = prod.featured_image | image_url: width: 800 %}
+              {% elsif thumb_src == blank %}
+                {% assign thumb_src = fallback_thumb_url %}
+              {% endif %}
+
+              {% assign title = prod.title %}
+              {% assign price = prod.price | money %}
+              {% assign comp_price = prod.compare_at_price | money %}
+              {% assign url = prod.url %}
+
+              <div class="pvc-slide" data-slide-index="{{ rendered_count }}">
+                <div class="pvc-card is-inactive">
+                  <div class="pvc-media-wrapper">
+                    {% if video_src != blank %}
+                      <video class="pvc-video" src="{{ video_src }}" playsinline loop muted preload="metadata"></video>
+                    {% endif %}
+                    {% if thumb_src != blank %}
+                      <img class="pvc-thumbnail" src="{{ thumb_src }}" alt="{{ title | escape }}" loading="lazy" />
+                    {% else %}
+                      <div class="pvc-thumbnail" style="background: linear-gradient(135deg, #1e293b, #0f172a);"></div>
+                    {% endif %}
+                    <div class="pvc-scrim"></div>
+                    
+                    <div class="pvc-play-indicator">
+                      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </div>
+
+                    <button type="button" class="pvc-audio-toggle" aria-label="Unmute video">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                        <line x1="17" y1="9" x2="23" y2="15"></line>
+                      </svg>
+                    </button>
+
+                    <div class="pvc-video-progress">
+                      <div class="pvc-progress-bar"></div>
+                    </div>
+                  </div>
+
+                  <div class="pvc-compact-pill">
+                    <span class="pvc-compact-pill-title">{{ title | escape }}</span>
+                    <span class="pvc-compact-pill-price">{{ price }}</span>
+                  </div>
+
+                  <a href="{{ url }}" class="pvc-product-card">
+                    <div class="pvc-product-info">
+                      <div class="pvc-product-text">
+                        <h3 class="pvc-product-title">{{ title | escape }}</h3>
+                        <div class="pvc-price-container">
+                          <span class="pvc-price">{{ price }}</span>
+                          {% if prod.compare_at_price > prod.price %}
+                            <span class="pvc-compare-price">{{ comp_price }}</span>
+                            <span class="pvc-discount-tag">Sale</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <span class="pvc-cta-btn">
+                      View Product
+                      <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </span>
+                  </a>
+                </div>
+              </div>
+
+              {% assign rendered_count = rendered_count | plus: 1 %}
+            {% endfor %}
+          {% endif %}
+
+          {% comment %} 4. Fallback Demo Items if no products are selected {% endcomment %}
+          {% if rendered_count == 0 %}
+            {% for j in (1..4) %}
+              <div class="pvc-slide" data-slide-index="{{ forloop.index0 }}">
+                <div class="pvc-card is-inactive">
+                  <div class="pvc-media-wrapper">
+                    {% if fallback_video_url != blank %}
+                      <video class="pvc-video" src="{{ fallback_video_url }}" playsinline loop muted preload="metadata"></video>
+                    {% endif %}
+                    {% if fallback_thumb_url != blank %}
+                      <img class="pvc-thumbnail" src="{{ fallback_thumb_url }}" alt="Demo Slide {{ j }}" loading="lazy" />
+                    {% else %}
+                      <div class="pvc-thumbnail" style="background: linear-gradient(135deg, #334155, #0f172a); display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 13px; text-align: center; padding: 20px;">
+                        Select Products in Theme Editor
+                      </div>
+                    {% endif %}
+                    <div class="pvc-scrim"></div>
+                    <span class="pvc-top-badge">Sample {{ j }}</span>
+                    <div class="pvc-play-indicator">
+                      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </div>
+                  </div>
+                  <div class="pvc-compact-pill">
+                    <span class="pvc-compact-pill-title">Featured Luxury Item {{ j }}</span>
+                    <span class="pvc-compact-pill-price">$240.00</span>
+                  </div>
+                  <a href="#" class="pvc-product-card">
+                    <div class="pvc-product-info">
+                      <div class="pvc-product-text">
+                        <h3 class="pvc-product-title">Featured Luxury Item {{ j }}</h3>
+                        <div class="pvc-price-container">
+                          <span class="pvc-price">$240.00</span>
+                          <span class="pvc-compare-price">$300.00</span>
+                          <span class="pvc-discount-tag">Save 20%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span class="pvc-cta-btn">
+                      View Product
+                      <svg viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </span>
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+
+      {% comment %} Pagination Dots {% endcomment %}
+      <div class="pvc-dots-wrapper"></div>
+    </div>
+  </div>
+</div>
+
+{{ 'product-video-carousel.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'product-video-carousel.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Product Video Carousel",
+  "target": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle / Overline",
+      "default": "Shop The Look"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Main Heading",
+      "default": "Featured Video Showcase"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "Browse our latest curated products in real-life action videos. Active items expand into portrait mode."
+    },
+    {
+      "type": "header",
+      "content": "Product & Video Source"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Select Products (Dynamic Items)",
+      "limit": 12
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Or Select Collection (Auto-Pulls Products)"
+    },
+    {
+      "type": "video",
+      "id": "fallback_video",
+      "label": "Default Video (For Products Without Media Video)"
+    },
+    {
+      "type": "image_picker",
+      "id": "fallback_thumbnail",
+      "label": "Default Thumbnail Image"
+    },
+    {
+      "type": "text",
+      "id": "badge_tag",
+      "label": "Card Badge Text",
+      "default": "Featured"
+    },
+    {
+      "type": "text",
+      "id": "video_url_1",
+      "label": "Custom MP4 URL for Product 1 (Optional)"
+    },
+    {
+      "type": "text",
+      "id": "video_url_2",
+      "label": "Custom MP4 URL for Product 2 (Optional)"
+    },
+    {
+      "type": "text",
+      "id": "video_url_3",
+      "label": "Custom MP4 URL for Product 3 (Optional)"
+    },
+    {
+      "type": "text",
+      "id": "video_url_4",
+      "label": "Custom MP4 URL for Product 4 (Optional)"
+    },
+    {
+      "type": "header",
+      "content": "Carousel Layout & Styling"
+    },
+    {
+      "type": "range",
+      "id": "card_width",
+      "min": 280,
+      "max": 420,
+      "step": 4,
+      "unit": "px",
+      "label": "Slide Width (Portrait 344px default)",
+      "default": 344
+    },
+    {
+      "type": "range",
+      "id": "slide_gap",
+      "min": 12,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "Gap Between Slides",
+      "default": 28
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_autoplay",
+      "label": "Enable Auto-Advance Carousel",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "autoplay_interval",
+      "min": 3000,
+      "max": 9000,
+      "step": 500,
+      "unit": "ms",
+      "label": "Autoplay Transition Interval",
+      "default": 5000
+    },
+    {
+      "type": "color",
+      "id": "section_background",
+      "label": "Section Background",
+      "default": "#f8fafc"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading Color",
+      "default": "#111827"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent / Highlight Color",
+      "default": "#d97706"
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "min": 8,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "label": "Card Corner Radius",
+      "default": 20
+    }
+  ]
+}
+{% endschema %}
