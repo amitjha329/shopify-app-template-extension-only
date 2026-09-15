@@ -583,6 +583,15 @@
   transform: translateY(-50%) scale(0.96);
 }
 
+.pvc-nav-btn.is-disabled,
+.pvc-nav-btn:disabled {
+  opacity: 0.28 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  transform: translateY(-50%) !important;
+  box-shadow: none !important;
+}
+
 .pvc-nav-btn.pvc-prev-btn {
   left: 20px;
 }

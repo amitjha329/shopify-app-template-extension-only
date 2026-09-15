@@ -22,7 +22,9 @@ class ProductVideoCarousel {
       autoplayInterval: 5000,
       initialIndex: 0,
       gap: 28,
-      soundMuted: true
+      soundMuted: true,
+      infinite: true,
+      wrap: true
     }, options);
 
     this.viewport = this.container.querySelector('.pvc-viewport');
@@ -41,6 +43,7 @@ class ProductVideoCarousel {
     this.currentIndex = 0;
     this.virtualIndex = 0;
     this.isAnimating = false;
+    this.animatingTimeout = null;
     this.isMuted = this.options.soundMuted;
     this.autoplayTimer = null;
     this.resizeObserver = null;
@@ -66,7 +69,7 @@ class ProductVideoCarousel {
     const initialIdx = (typeof this.options.initialIndex === 'number' && !isNaN(this.options.initialIndex))
       ? this.options.initialIndex
       : 0;
-    this.goToSlide(this.cloneOffset + initialIdx, false);
+    this.goToSlide(this.options.infinite ? (this.cloneOffset + initialIdx) : initialIdx, false);
 
     if (this.options.autoplay) {
       this.startAutoplay();
@@ -80,7 +83,19 @@ class ProductVideoCarousel {
     // Clear any previous clones
     this.track.querySelectorAll('.pvc-clone').forEach(el => el.remove());
 
-    // We clone 2 sets before and 2 sets after for seamless loop
+    if (!this.options.infinite || this.slideCount <= 1) {
+      this.allSlides = this.originalSlides;
+      this.cloneOffset = 0;
+      const initialIdx = (typeof this.options.initialIndex === 'number' && !isNaN(this.options.initialIndex))
+        ? this.options.initialIndex
+        : 0;
+      this.virtualIndex = Math.min(Math.max(0, initialIdx), this.slideCount - 1);
+      this.renderDots();
+      this.updateNavButtons();
+      return;
+    }
+
+    // We clone sets before and after for seamless infinite loop
     const cloneCount = Math.max(3, this.slideCount);
     
     // Prefix clones
@@ -110,6 +125,7 @@ class ProductVideoCarousel {
     this.virtualIndex = this.cloneOffset + this.options.initialIndex;
 
     this.renderDots();
+    this.updateNavButtons();
   }
 
   /**
@@ -119,17 +135,17 @@ class ProductVideoCarousel {
     if (!this.dotsContainer) return;
     this.dotsContainer.innerHTML = '';
     
-    this.originalSlides.forEach((_, idx) => {
+    for (let idx = 0; idx < this.slideCount; idx++) {
       const dot = document.createElement('button');
       dot.className = `pvc-dot ${idx === this.currentIndex ? 'is-active' : ''}`;
       dot.setAttribute('type', 'button');
       dot.setAttribute('aria-label', `Go to slide ${idx + 1}`);
       dot.addEventListener('click', () => {
         this.stopAutoplay();
-        this.goToOriginalIndex(idx);
+        this.goToOriginalIndex(idx, true);
       });
       this.dotsContainer.appendChild(dot);
-    });
+    }
   }
 
   /**
@@ -161,14 +177,26 @@ class ProductVideoCarousel {
   goToSlide(virtualIndex, animate = true) {
     if (this.allSlides.length === 0) return;
 
+    // Strict boundary clamping
+    if (virtualIndex < 0) virtualIndex = 0;
+    if (virtualIndex >= this.allSlides.length) virtualIndex = this.allSlides.length - 1;
+
     this.virtualIndex = virtualIndex;
     const targetSlide = this.allSlides[this.virtualIndex];
     if (!targetSlide) return;
 
     // Calculate real original index
-    this.currentIndex = ((this.virtualIndex - this.cloneOffset) % this.slideCount + this.slideCount) % this.slideCount;
+    this.currentIndex = this.options.infinite
+      ? (((this.virtualIndex - this.cloneOffset) % this.slideCount + this.slideCount) % this.slideCount)
+      : this.virtualIndex;
 
     const targetOffset = this.getCenterOffset(targetSlide);
+
+    // If offset is unchanged, avoid initiating an idle 0px CSS transition
+    if (animate && Math.abs(targetOffset - this.currentTranslate) < 1) {
+      animate = false;
+    }
+
     this.currentTranslate = targetOffset;
     this.prevTranslate = targetOffset;
 
@@ -176,7 +204,19 @@ class ProductVideoCarousel {
       this.isAnimating = true;
       this.track.classList.remove('pvc-no-transition');
       this.track.classList.add('is-animating');
+
+      // Safety watchdog: ensure isAnimating never stays stuck if transitionend is missed
+      if (this.animatingTimeout) clearTimeout(this.animatingTimeout);
+      this.animatingTimeout = setTimeout(() => {
+        if (this.isAnimating) {
+          this.handleTransitionEnd();
+        }
+      }, 550);
     } else {
+      if (this.animatingTimeout) {
+        clearTimeout(this.animatingTimeout);
+        this.animatingTimeout = null;
+      }
       this.isAnimating = false;
       this.track.classList.remove('is-animating');
       this.track.classList.add('pvc-no-transition');
@@ -185,6 +225,7 @@ class ProductVideoCarousel {
     this.setTrackPosition(targetOffset);
     this.updateCardStates();
     this.updateDots();
+    this.updateNavButtons();
 
     if (!animate) {
       // Force DOM reflow to commit classes with transition: none synchronously
@@ -197,21 +238,82 @@ class ProductVideoCarousel {
   }
 
   /**
+   * Update nav buttons enabled/disabled states (for non-infinite non-wrapping modes)
+   */
+  updateNavButtons() {
+    if (!this.prevBtn || !this.nextBtn) return;
+    if (!this.options.infinite && !this.options.wrap) {
+      const isFirst = this.virtualIndex <= 0;
+      const isLast = this.virtualIndex >= this.slideCount - 1;
+      this.prevBtn.classList.toggle('is-disabled', isFirst);
+      this.prevBtn.disabled = isFirst;
+      this.nextBtn.classList.toggle('is-disabled', isLast);
+      this.nextBtn.disabled = isLast;
+    } else {
+      this.prevBtn.classList.remove('is-disabled');
+      this.prevBtn.disabled = false;
+      this.nextBtn.classList.remove('is-disabled');
+      this.nextBtn.disabled = false;
+    }
+  }
+
+  /**
    * Navigate to original slide index (0 to slideCount - 1)
    */
   goToOriginalIndex(originalIndex, animate = true) {
-    const diff = originalIndex - this.currentIndex;
-    this.goToSlide(this.virtualIndex + diff, animate);
+    if (this.options.infinite) {
+      const diff = originalIndex - this.currentIndex;
+      this.goToSlide(this.virtualIndex + diff, animate);
+    } else {
+      this.goToSlide(originalIndex, animate);
+    }
   }
 
   next() {
-    if (this.isAnimating) return;
-    this.goToSlide(this.virtualIndex + 1, true);
+    this.stopAutoplay();
+
+    // If currently animating, immediately finalize previous motion so every click responds!
+    if (this.isAnimating) {
+      this.handleTransitionEnd();
+    }
+
+    if (this.options.infinite) {
+      // If at or past suffix clone boundary, wrap to original first so next() always has room
+      if (this.virtualIndex >= this.allSlides.length - 1) {
+        this.wrapToOriginal();
+      }
+      this.goToSlide(this.virtualIndex + 1, true);
+    } else {
+      if (this.virtualIndex < this.slideCount - 1) {
+        this.goToSlide(this.virtualIndex + 1, true);
+      } else if (this.options.wrap) {
+        // Wrap smoothly to first slide
+        this.goToSlide(0, true);
+      }
+    }
   }
 
   prev() {
-    if (this.isAnimating) return;
-    this.goToSlide(this.virtualIndex - 1, true);
+    this.stopAutoplay();
+
+    if (this.isAnimating) {
+      this.handleTransitionEnd();
+    }
+
+    if (this.options.infinite) {
+      // If at or past prefix clone boundary, wrap to original first so prev() always has room
+      if (this.virtualIndex <= 0) {
+        this.wrapToOriginal();
+      }
+      this.goToSlide(this.virtualIndex - 1, true);
+    } else {
+      if (this.virtualIndex > 0) {
+        this.goToSlide(this.virtualIndex - 1, true);
+      } else if (this.options.wrap) {
+        // Wrap smoothly to last slide
+        this.goToSlide(this.slideCount - 1, true);
+      }
+    }
   }
 
   /**
@@ -293,19 +395,39 @@ class ProductVideoCarousel {
    * Post-animation cleanup & infinite wrap jump
    */
   handleTransitionEnd() {
+    if (this.animatingTimeout) {
+      clearTimeout(this.animatingTimeout);
+      this.animatingTimeout = null;
+    }
     this.isAnimating = false;
     this.track.classList.remove('is-animating');
 
-    // Check if virtual index moved into clone territory
+    if (this.options.infinite) {
+      const totalOriginals = this.slideCount;
+      const lowerBound = this.cloneOffset;
+      const upperBound = this.cloneOffset + totalOriginals - 1;
+
+      if (this.virtualIndex < lowerBound || this.virtualIndex > upperBound) {
+        this.wrapToOriginal();
+      } else {
+        this.handleSlideActivated();
+      }
+    } else {
+      this.handleSlideActivated();
+      this.updateNavButtons();
+    }
+  }
+
+  /**
+   * Seamless instant clone wrap to original slide
+   */
+  wrapToOriginal() {
+    if (!this.options.infinite) return;
     const totalOriginals = this.slideCount;
-    const lowerBound = this.cloneOffset;
-    const upperBound = this.cloneOffset + totalOriginals - 1;
+    const normalizedOriginal = ((this.virtualIndex - this.cloneOffset) % totalOriginals + totalOriginals) % totalOriginals;
+    const newVirtualIndex = this.cloneOffset + normalizedOriginal;
 
-    if (this.virtualIndex < lowerBound || this.virtualIndex > upperBound) {
-      // Wrap virtual index to matching original slide without animation
-      const normalizedOriginal = ((this.virtualIndex - this.cloneOffset) % totalOriginals + totalOriginals) % totalOriginals;
-      const newVirtualIndex = this.cloneOffset + normalizedOriginal;
-
+    if (newVirtualIndex !== this.virtualIndex) {
       // Transfer video state seamlessly so video doesn't reload or stutter
       const currentSlide = this.allSlides[this.virtualIndex];
       const currentVideo = currentSlide ? currentSlide.querySelector('video.pvc-video') : null;
@@ -455,7 +577,9 @@ class ProductVideoCarousel {
    */
   bindDragEvents() {
     const handleStart = (clientX) => {
-      if (this.isAnimating) return;
+      if (this.isAnimating) {
+        this.handleTransitionEnd();
+      }
       this.isDragging = true;
       this.startX = clientX;
       this.dragStartTime = Date.now();
@@ -653,6 +777,10 @@ class ProductVideoCarousel {
 
   destroy() {
     this.stopAutoplay();
+    if (this.animatingTimeout) {
+      clearTimeout(this.animatingTimeout);
+      this.animatingTimeout = null;
+    }
     if (this.resizeObserver) this.resizeObserver.disconnect();
     if (this.intersectionObserver) this.intersectionObserver.disconnect();
   }
@@ -664,9 +792,13 @@ function initAllProductVideoCarousels() {
     if (!el._pvcInstance) {
       const autoplay = el.dataset.autoplay === 'true';
       const interval = parseInt(el.dataset.autoplayInterval, 10) || 5000;
+      const infinite = el.dataset.infinite !== 'false';
+      const wrap = el.dataset.wrap !== 'false';
       el._pvcInstance = new ProductVideoCarousel(el, {
         autoplay: autoplay,
-        autoplayInterval: interval
+        autoplayInterval: interval,
+        infinite: infinite,
+        wrap: wrap
       });
     }
   });
@@ -683,7 +815,16 @@ if (document.readyState === 'loading') {
 document.addEventListener('shopify:section:load', (e) => {
   const section = e.target.querySelector('[data-product-video-carousel]');
   if (section) {
-    section._pvcInstance = new ProductVideoCarousel(section);
+    const autoplay = section.dataset.autoplay === 'true';
+    const interval = parseInt(section.dataset.autoplayInterval, 10) || 5000;
+    const infinite = section.dataset.infinite !== 'false';
+    const wrap = section.dataset.wrap !== 'false';
+    section._pvcInstance = new ProductVideoCarousel(section, {
+      autoplay: autoplay,
+      autoplayInterval: interval,
+      infinite: infinite,
+      wrap: wrap
+    });
   }
 });
 

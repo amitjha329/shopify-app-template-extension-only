@@ -34,6 +34,8 @@
   data-product-video-carousel
   data-autoplay="{{ block.settings.enable_autoplay }}"
   data-autoplay-interval="{{ block.settings.autoplay_interval | default: 5000 }}"
+  data-infinite="{% if block.settings.enable_infinite == false %}false{% else %}true{% endif %}"
+  data-wrap="{% if block.settings.enable_wrap == false %}false{% else %}true{% endif %}"
 >
   <div class="pvc-container">
     {% if block.settings.title != blank or block.settings.subtitle != blank %}
@@ -508,6 +510,18 @@
       "unit": "ms",
       "label": "Autoplay Transition Interval",
       "default": 5000
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_infinite",
+      "label": "Enable Infinite Carousel Loop",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_wrap",
+      "label": "Wrap Around at End (When Infinite is Off)",
+      "default": true
     },
     {
       "type": "color",
